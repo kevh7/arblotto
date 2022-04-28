@@ -6,6 +6,7 @@ import { ethers } from "ethers";
 // We import the contract's artifacts and address here, as we are going to be
 // using them with ethers
 import LotteryArtifact from "../contracts/Lottery.json";
+import IERC20Artifact from "../contracts/IERC20.json";
 import contractAddress from "../contracts/contract-address.json";
 
 import { NoWalletDetected } from "./NoWalletDetected";
@@ -18,6 +19,14 @@ const ARBITRUM_MAINNET_NETWORK_ID = "42161";
 const ARBITRUM_TESTNET_NETWORK_ID = "421611";
 const HARDHAT_NETWORK_ID = "1337";
 
+const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
+
+const AAVE_MAINNET_ADDR = "0x794a61358D6845594F94dc1DB02A252b5b4814aD";
+const USDC_MAINNET_ADDR = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8";
+
+const AAVE_TESTNET_ADDR = "0x9C55a3C34de5fd46004Fa44a55490108f7cE388F";
+const USDC_TESTNET_ADDR = "0x774382EF196781400a335AF0c4219eEd684ED713";
+
 export class Dapp extends React.Component {
   constructor(props) {
     super(props);
@@ -28,6 +37,8 @@ export class Dapp extends React.Component {
       txBeingSent: undefined,
       transactionError: undefined,
       networkError: undefined,
+      aaveAddr: undefined,
+      usdcAddr: undefined,
     };
 
     this.state = this.initialState;
@@ -169,6 +180,93 @@ export class Dapp extends React.Component {
       LotteryArtifact.abi,
       this._provider.getSigner(0)
     );
+
+    // Initialize the USDC token contract.
+    this._usdc_contract = new ethers.Contract(
+      this.state.usdcAddr,
+      IERC20Artifact.abi,
+      this._provider.getSigner(0)
+    );
+  }
+
+  /**
+   * Deposit USDC into the contract.
+   * @param amt the amount of USDC to deposit where 10^6 units = 1 USDC
+   */
+  async deposit(amt) {
+    // First, approve the USDC transfer to the lottery contract
+    await this._doTransaction(this._usdc_contract.approve, [
+      contractAddress.Lottery,
+      amt,
+    ]);
+
+    // Then do the actual deposit
+    await this._doTransaction(this._lottery_contract.deposit, [
+      this.state.aaveAddr,
+      this.state.usdcAddr,
+      amt,
+    ]);
+  }
+
+  /**
+   * Withdraw all your USDC from the contract.
+   */
+  async withdraw() {
+    // Call the contract withdraw function.
+    await this._doTransaction(this._lottery_contract.withdraw, [
+      this.state.aaveAddr,
+      this.state.usdcAddr,
+    ]);
+  }
+
+  /**
+   * Wrapper function for making contract calls. This function will properly wait
+   * for transactions to be completed and handle errors accordingly.
+   * @param callback the transaction function to be called
+   * @param args the list of arguments to be passed into callback
+   */
+  async _doTransaction(callback, args) {
+    try {
+      // If a transaction fails, we save that error in the component's state.
+      // We only save one such error, so before sending a second transaction, we
+      // clear it.
+      this._dismissTransactionError();
+
+      // We send the transaction, and save its hash in the Dapp's state. This
+      // way we can indicate that we are waiting for it to be mined.
+      const tx = await callback.apply(this, args);
+      this.setState({ txBeingSent: tx.hash });
+
+      // We use .wait() to wait for the transaction to be mined. This method
+      // returns the transaction's receipt.
+      const receipt = await tx.wait();
+
+      // The receipt, contains a status flag, which is 0 to indicate an error.
+      if (receipt.status === 0) {
+        // We can't know the exact error that made the transaction fail when it
+        // was mined, so we throw this generic one.
+        throw new Error("Transaction failed");
+      }
+
+      // If we got here, the transaction was successful, so you may want to
+      // update your state. Here, we update the user's balance.
+      // await this._updateBalance();
+    } catch (error) {
+      // We check the error code to see if this error was produced because the
+      // user rejected a tx. If that's the case, we do nothing.
+      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) {
+        return;
+      }
+
+      // Other errors are logged and stored in the Dapp's state. This is used to
+      // show them to the user, and for debugging.
+      console.error(error);
+      this.setState({ transactionError: error });
+    } finally {
+      // If we leave the try/catch, we aren't sending a tx anymore, so we clear
+      // this part of the state.
+      this.setState({ txBeingSent: undefined });
+    }
   }
 
   // Start polling data that needs to be continuously updated
@@ -214,19 +312,19 @@ export class Dapp extends React.Component {
 
   // This method checks if MetaMask selected network is either Arbitrum Mainnet or Arbitrum Testnet
   _checkNetwork() {
-    if (
-      window.ethereum.networkVersion === ARBITRUM_MAINNET_NETWORK_ID ||
-      window.ethereum.networkVersion === ARBITRUM_TESTNET_NETWORK_ID ||
-      window.ethereum.networkVersion === HARDHAT_NETWORK_ID
-    ) {
-      return true;
+    if (window.ethereum.networkVersion === ARBITRUM_MAINNET_NETWORK_ID) {
+      this.state.aaveAddr = AAVE_MAINNET_ADDR;
+      this.state.usdcAddr = USDC_MAINNET_ADDR;
+    } else if (window.ethereum.networkVersion === ARBITRUM_TESTNET_NETWORK_ID) {
+      this.state.aaveAddr = AAVE_TESTNET_ADDR;
+      this.state.usdcAddr = USDC_TESTNET_ADDR;
+    } else if (!(window.ethereum.networkVersion === HARDHAT_NETWORK_ID)) {
+      this.setState({
+        networkError:
+          "Please set your MetaMask network to one of Arbitrum Mainnet, Arbitrum Testnet, or http://localhost:8545",
+      });
+      return false;
     }
-
-    this.setState({
-      networkError:
-        "Please set your MetaMask network to one of Arbitrum Mainnet, Arbitrum Testnet, or http://localhost:8545",
-    });
-
-    return false;
+    return true;
   }
 }

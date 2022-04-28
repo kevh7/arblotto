@@ -36,6 +36,13 @@ function saveFrontendFiles(lottery) {
     contractsDir + "/Lottery.json",
     JSON.stringify(LotteryArtifact, null, 2)
   );
+
+  const IERC20Artifact = artifacts.readArtifactSync("IERC20");
+
+  fs.writeFileSync(
+    contractsDir + "/IERC20.json",
+    JSON.stringify(IERC20Artifact, null, 2)
+  );
 }
 
 main()
