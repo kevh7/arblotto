@@ -134,7 +134,7 @@ contract Lottery {
         IERC20(erc20Addr).transfer(winner, (accrued * 99) / 100);
 
         // send 1% of interest to the caller as an incentive for running the lottery
-        IERC20(erc20Addr).transfer(winner, (accrued * 1) / 100);
+        IERC20(erc20Addr).transfer(msg.sender, (accrued * 1) / 100);
 
         // add all inactive users into lottery
         _includeInLottery();
