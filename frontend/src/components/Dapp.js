@@ -402,7 +402,8 @@ export class Dapp extends React.Component {
    * Returns the unix timestamp of the last time the lottery was run.
    */
   async getLastLotteryTimestamp() {
-    return await this._lottery_contract.getLastLotteryTimestamp();
+    let res = await this._lottery_contract.getLastLotteryTimestamp();
+    return await res.toString();
   }
 
   /**
