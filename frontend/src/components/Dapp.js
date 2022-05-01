@@ -1,4 +1,7 @@
 import React from "react";
+import NavBar from './NavBar';
+import MainLottery from './MainLottery';
+import "./Dapp.css"
 
 // We'll use ethers to interact with the Ethereum network and our contract
 import { ethers } from "ethers";
@@ -15,6 +18,10 @@ import { Loading } from "./Loading";
 import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 
+import PrizePage from "./PrizePage";
+import AboutPage from "./AboutPage";
+import TeamPage from "./TeamPage";
+
 const ARBITRUM_MAINNET_NETWORK_ID = "42161";
 const ARBITRUM_TESTNET_NETWORK_ID = "421611";
 const HARDHAT_NETWORK_ID = "1337";
@@ -26,6 +33,7 @@ const USDC_MAINNET_ADDR = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8";
 
 const AAVE_TESTNET_ADDR = "0x9C55a3C34de5fd46004Fa44a55490108f7cE388F";
 const USDC_TESTNET_ADDR = "0x774382EF196781400a335AF0c4219eEd684ED713";
+
 
 export class Dapp extends React.Component {
   constructor(props) {
@@ -39,9 +47,34 @@ export class Dapp extends React.Component {
       networkError: undefined,
       aaveAddr: undefined,
       usdcAddr: undefined,
+      page: "home"
     };
 
     this.state = this.initialState;
+  }
+
+  homePage = () => {
+    this.setState({
+      page: "home",
+    });
+  }
+  prizesPage = () => {
+    this.setState( {
+        page: "prizes",
+      }
+    );
+  }
+  aboutPage = () => {
+    this.setState( {
+        page: "about",
+      }
+    );
+  }
+  teamPage = () => {
+    this.setState( {
+        page: "team",
+      }
+    );
   }
 
   render() {
@@ -60,11 +93,17 @@ export class Dapp extends React.Component {
     // clicks a button. This callback just calls the _connectWallet method.
     if (!this.state.selectedAddress) {
       return (
-        <ConnectWallet
-          connectWallet={() => this._connectWallet()}
-          networkError={this.state.networkError}
-          dismiss={() => this._dismissNetworkError()}
-        />
+        <div className="overlay">
+        <div className="Dapp">
+          <NavBar account={this.state.selectedAddress} connectWallet={() => this._connectWallet()} homePage = {this.homePage} prizesPage={this.prizesPage} aboutPage={this.aboutPage} teamPage={this.teamPage}/>
+          <ConnectWallet
+            connectWallet={() => this._connectWallet()}
+            networkError={this.state.networkError}
+            dismiss={() => this._dismissNetworkError()}
+          />
+        </div>
+        <div className="moving-background"></div>
+      </div>
       );
     }
 
@@ -74,43 +113,96 @@ export class Dapp extends React.Component {
       return <Loading />;
     }
 
+    if (this.state.page === "prizes") {
+      return (
+      <div className="overlay">
+        <div className="Dapp">
+          <NavBar account={this.state.selectedAddress} connectWallet={() => this._connectWallet()} homePage = {this.homePage} prizesPage={this.prizesPage} aboutPage={this.aboutPage} teamPage={this.teamPage}/>
+          <PrizePage account={this.state.selectedAddress} runLottery={this.runLottery} withdraw={this.withdraw}/>
+        </div>
+        <div className="moving-background"></div>
+      </div>
+      );
+    }
+    if (this.state.page === "about") {
+      return (
+      <div className="overlay">
+        <div className="Dapp">
+          <NavBar account={this.state.selectedAddress} connectWallet={() => this._connectWallet()} homePage = {this.homePage} prizesPage={this.prizesPage} aboutPage={this.aboutPage} teamPage={this.teamPage}/>
+          <AboutPage account={this.state.selectedAddress}/>
+        </div>
+        <div className="moving-background"></div>
+      </div>
+      );
+    }
+    if (this.state.page === "team") {
+      return (
+      <div className="overlay">
+        <div className="Dapp">
+          <NavBar account={this.state.selectedAddress} connectWallet={() => this._connectWallet()} homePage = {this.homePage} prizesPage={this.prizesPage} aboutPage={this.aboutPage} teamPage={this.teamPage}/>
+          <TeamPage account={this.state.selectedAddress}/>
+        </div>
+        <div className="moving-background"></div>
+      </div>
+      );
+    }
+
+    if (this.state.page === "home") {
+      return (
+      <div className="overlay">
+        <div className="Dapp">
+          <NavBar account={this.state.selectedAddress} connectWallet={() => this._connectWallet()} homePage = {this.homePage} prizesPage={this.prizesPage} aboutPage={this.aboutPage} teamPage={this.teamPage}/>
+          <MainLottery account={this.state.selectedAddress}/>
+        </div>
+        <div className="moving-background"></div>
+      </div>
+      );
+    }
+
     // If everything is loaded, we render the application.
     return (
-      <div className="container p-4">
-        <div className="row">
-          <div className="col-12">
-            <p>
-              Welcome <b>{this.state.selectedAddress}!</b>
-            </p>
-          </div>
+      <div className="overlay">
+        <div className="Dapp">
+          <NavBar account={this.state.selectedAddress} connectWallet={() => this._connectWallet()} homePage = {this.homePage} prizesPage={this.prizesPage} aboutPage={this.aboutPage} teamPage={this.teamPage}/>
+          <MainLottery account={this.state.selectedAddress} deposit={this.deposit}/>
         </div>
-
-        <hr />
-
-        <div className="row">
-          <div className="col-12">
-            {/* 
-              Sending a transaction isn't an immediate action. You have to wait
-              for it to be mined.
-              If we are waiting for one, we show a message here.
-            */}
-            {this.state.txBeingSent && (
-              <WaitingForTransactionMessage txHash={this.state.txBeingSent} />
-            )}
-
-            {/* 
-              Sending a transaction can fail in multiple ways. 
-              If that happened, we show a message here.
-            */}
-            {this.state.transactionError && (
-              <TransactionErrorMessage
-                message={this._getRpcErrorMessage(this.state.transactionError)}
-                dismiss={() => this._dismissTransactionError()}
-              />
-            )}
-          </div>
-        </div>
+        <div className="moving-background"></div>
       </div>
+      // <div className="container p-4">
+      //   <div className="row">
+      //     <div className="col-12">
+      //       <p>
+      //         Welcome <b>{this.state.selectedAddress}!</b>
+      //       </p>
+      //     </div>
+      //   </div>
+
+      //   <hr />
+
+      //   <div className="row">
+      //     <div className="col-12">
+      //       {/* 
+      //         Sending a transaction isn't an immediate action. You have to wait
+      //         for it to be mined.
+      //         If we are waiting for one, we show a message here.
+      //       */}
+      //       {this.state.txBeingSent && (
+      //         <WaitingForTransactionMessage txHash={this.state.txBeingSent} />
+      //       )}
+
+      //       {/* 
+      //         Sending a transaction can fail in multiple ways. 
+      //         If that happened, we show a message here.
+      //       */}
+      //       {this.state.transactionError && (
+      //         <TransactionErrorMessage
+      //           message={this._getRpcErrorMessage(this.state.transactionError)}
+      //           dismiss={() => this._dismissTransactionError()}
+      //         />
+      //       )}
+      //     </div>
+      //   </div>
+      // </div>
     );
   }
 
@@ -214,6 +306,16 @@ export class Dapp extends React.Component {
   async withdraw() {
     // Call the contract withdraw function.
     await this._doTransaction(this._lottery_contract.withdraw, [
+      this.state.aaveAddr,
+      this.state.usdcAddr,
+    ]);
+  }
+
+  /**
+   * Run the lottery.
+   */
+  async runLottery() {
+    await this._doTransaction(this._lottery_contract.runLottery, [
       this.state.aaveAddr,
       this.state.usdcAddr,
     ]);
