@@ -1,10 +1,10 @@
 import React from "react";
-import NavBar from './NavBar';
-import MainLottery from './MainLottery';
-import "./Dapp.css"
+import NavBar from "./NavBar";
+import MainLottery from "./MainLottery";
+import "./Dapp.css";
 
 // We'll use ethers to interact with the Ethereum network and our contract
-import { ethers } from "ethers";
+import { ethers, BigNumber } from "ethers";
 
 // We import the contract's artifacts and address here, as we are going to be
 // using them with ethers
@@ -34,6 +34,8 @@ const USDC_MAINNET_ADDR = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8";
 const AAVE_TESTNET_ADDR = "0x9C55a3C34de5fd46004Fa44a55490108f7cE388F";
 const USDC_TESTNET_ADDR = "0x774382EF196781400a335AF0c4219eEd684ED713";
 
+// Aave represents all values by the factor of 10^6 units = 1 USDC
+const USDC_FACTOR = BigNumber.from(1000000);
 
 export class Dapp extends React.Component {
   constructor(props) {
@@ -47,7 +49,7 @@ export class Dapp extends React.Component {
       networkError: undefined,
       aaveAddr: undefined,
       usdcAddr: undefined,
-      page: "home"
+      page: "home",
     };
 
     this.state = this.initialState;
@@ -57,25 +59,22 @@ export class Dapp extends React.Component {
     this.setState({
       page: "home",
     });
-  }
+  };
   prizesPage = () => {
-    this.setState( {
-        page: "prizes",
-      }
-    );
-  }
+    this.setState({
+      page: "prizes",
+    });
+  };
   aboutPage = () => {
-    this.setState( {
-        page: "about",
-      }
-    );
-  }
+    this.setState({
+      page: "about",
+    });
+  };
   teamPage = () => {
-    this.setState( {
-        page: "team",
-      }
-    );
-  }
+    this.setState({
+      page: "team",
+    });
+  };
 
   render() {
     // Ethereum wallets inject the window.ethereum object. If it hasn't been
@@ -94,16 +93,23 @@ export class Dapp extends React.Component {
     if (!this.state.selectedAddress) {
       return (
         <div className="overlay">
-        <div className="Dapp">
-          <NavBar account={this.state.selectedAddress} connectWallet={() => this._connectWallet()} homePage = {this.homePage} prizesPage={this.prizesPage} aboutPage={this.aboutPage} teamPage={this.teamPage}/>
-          <ConnectWallet
-            connectWallet={() => this._connectWallet()}
-            networkError={this.state.networkError}
-            dismiss={() => this._dismissNetworkError()}
-          />
+          <div className="Dapp">
+            <NavBar
+              account={this.state.selectedAddress}
+              connectWallet={() => this._connectWallet()}
+              homePage={this.homePage}
+              prizesPage={this.prizesPage}
+              aboutPage={this.aboutPage}
+              teamPage={this.teamPage}
+            />
+            <ConnectWallet
+              connectWallet={() => this._connectWallet()}
+              networkError={this.state.networkError}
+              dismiss={() => this._dismissNetworkError()}
+            />
+          </div>
+          <div className="moving-background"></div>
         </div>
-        <div className="moving-background"></div>
-      </div>
       );
     }
 
@@ -115,47 +121,79 @@ export class Dapp extends React.Component {
 
     if (this.state.page === "prizes") {
       return (
-      <div className="overlay">
-        <div className="Dapp">
-          <NavBar account={this.state.selectedAddress} connectWallet={() => this._connectWallet()} homePage = {this.homePage} prizesPage={this.prizesPage} aboutPage={this.aboutPage} teamPage={this.teamPage}/>
-          <PrizePage account={this.state.selectedAddress} runLottery={this.runLottery} withdraw={this.withdraw}/>
+        <div className="overlay">
+          <div className="Dapp">
+            <NavBar
+              account={this.state.selectedAddress}
+              connectWallet={() => this._connectWallet()}
+              homePage={this.homePage}
+              prizesPage={this.prizesPage}
+              aboutPage={this.aboutPage}
+              teamPage={this.teamPage}
+            />
+            <PrizePage
+              account={this.state.selectedAddress}
+              runLottery={this.runLottery}
+              withdraw={this.withdraw}
+            />
+          </div>
+          <div className="moving-background"></div>
         </div>
-        <div className="moving-background"></div>
-      </div>
       );
     }
     if (this.state.page === "about") {
       return (
-      <div className="overlay">
-        <div className="Dapp">
-          <NavBar account={this.state.selectedAddress} connectWallet={() => this._connectWallet()} homePage = {this.homePage} prizesPage={this.prizesPage} aboutPage={this.aboutPage} teamPage={this.teamPage}/>
-          <AboutPage account={this.state.selectedAddress}/>
+        <div className="overlay">
+          <div className="Dapp">
+            <NavBar
+              account={this.state.selectedAddress}
+              connectWallet={() => this._connectWallet()}
+              homePage={this.homePage}
+              prizesPage={this.prizesPage}
+              aboutPage={this.aboutPage}
+              teamPage={this.teamPage}
+            />
+            <AboutPage account={this.state.selectedAddress} />
+          </div>
+          <div className="moving-background"></div>
         </div>
-        <div className="moving-background"></div>
-      </div>
       );
     }
     if (this.state.page === "team") {
       return (
-      <div className="overlay">
-        <div className="Dapp">
-          <NavBar account={this.state.selectedAddress} connectWallet={() => this._connectWallet()} homePage = {this.homePage} prizesPage={this.prizesPage} aboutPage={this.aboutPage} teamPage={this.teamPage}/>
-          <TeamPage account={this.state.selectedAddress}/>
+        <div className="overlay">
+          <div className="Dapp">
+            <NavBar
+              account={this.state.selectedAddress}
+              connectWallet={() => this._connectWallet()}
+              homePage={this.homePage}
+              prizesPage={this.prizesPage}
+              aboutPage={this.aboutPage}
+              teamPage={this.teamPage}
+            />
+            <TeamPage account={this.state.selectedAddress} />
+          </div>
+          <div className="moving-background"></div>
         </div>
-        <div className="moving-background"></div>
-      </div>
       );
     }
 
     if (this.state.page === "home") {
       return (
-      <div className="overlay">
-        <div className="Dapp">
-          <NavBar account={this.state.selectedAddress} connectWallet={() => this._connectWallet()} homePage = {this.homePage} prizesPage={this.prizesPage} aboutPage={this.aboutPage} teamPage={this.teamPage}/>
-          <MainLottery account={this.state.selectedAddress}/>
+        <div className="overlay">
+          <div className="Dapp">
+            <NavBar
+              account={this.state.selectedAddress}
+              connectWallet={() => this._connectWallet()}
+              homePage={this.homePage}
+              prizesPage={this.prizesPage}
+              aboutPage={this.aboutPage}
+              teamPage={this.teamPage}
+            />
+            <MainLottery account={this.state.selectedAddress} />
+          </div>
+          <div className="moving-background"></div>
         </div>
-        <div className="moving-background"></div>
-      </div>
       );
     }
 
@@ -163,8 +201,18 @@ export class Dapp extends React.Component {
     return (
       <div className="overlay">
         <div className="Dapp">
-          <NavBar account={this.state.selectedAddress} connectWallet={() => this._connectWallet()} homePage = {this.homePage} prizesPage={this.prizesPage} aboutPage={this.aboutPage} teamPage={this.teamPage}/>
-          <MainLottery account={this.state.selectedAddress} deposit={this.deposit}/>
+          <NavBar
+            account={this.state.selectedAddress}
+            connectWallet={() => this._connectWallet()}
+            homePage={this.homePage}
+            prizesPage={this.prizesPage}
+            aboutPage={this.aboutPage}
+            teamPage={this.teamPage}
+          />
+          <MainLottery
+            account={this.state.selectedAddress}
+            deposit={this.deposit}
+          />
         </div>
         <div className="moving-background"></div>
       </div>
@@ -181,7 +229,7 @@ export class Dapp extends React.Component {
 
       //   <div className="row">
       //     <div className="col-12">
-      //       {/* 
+      //       {/*
       //         Sending a transaction isn't an immediate action. You have to wait
       //         for it to be mined.
       //         If we are waiting for one, we show a message here.
@@ -190,8 +238,8 @@ export class Dapp extends React.Component {
       //         <WaitingForTransactionMessage txHash={this.state.txBeingSent} />
       //       )}
 
-      //       {/* 
-      //         Sending a transaction can fail in multiple ways. 
+      //       {/*
+      //         Sending a transaction can fail in multiple ways.
       //         If that happened, we show a message here.
       //       */}
       //       {this.state.transactionError && (
@@ -283,9 +331,12 @@ export class Dapp extends React.Component {
 
   /**
    * Deposit USDC into the contract.
-   * @param amt the amount of USDC to deposit where 10^6 units = 1 USDC
+   * @param amt the amount of USDC to deposit
    */
   async deposit(amt) {
+    amt = BigNumber.from(amt);
+    amt = amt * USDC_FACTOR;
+
     // First, approve the USDC transfer to the lottery contract
     await this._doTransaction(this._usdc_contract.approve, [
       contractAddress.Lottery,
@@ -309,6 +360,49 @@ export class Dapp extends React.Component {
       this.state.aaveAddr,
       this.state.usdcAddr,
     ]);
+  }
+
+  /**
+   * Returns amount the user currently has deposited.
+   */
+  async getDeposited() {
+    let res = await this._lottery_contract.getDeposited();
+    return await (res / USDC_FACTOR).toString();
+  }
+
+  /**
+   * Returns amount the total amount of prizes this user has ever won.
+   */
+  async getTotalPrizesWon() {
+    // Call the contract withdraw function.
+    let res = await this._lottery_contract.getTotalPrizesWon();
+    return await (res / USDC_FACTOR).toString();
+  }
+
+  /**
+   * Returns amount the current size of the pool (all user deposits).
+   */
+  async getCurrentPoolSize() {
+    // Call the contract withdraw function.
+    let res = await this._lottery_contract.getCurrentPoolSize();
+    return await (res / USDC_FACTOR).toString();
+  }
+
+  /**
+   * Returns the extrapolated size of the next lottery.
+   */
+  async getEstimatedNextPrize() {
+    let res = await this._lottery_contract.getEstimatedNextPrize(
+      this.state.aaveAddr
+    );
+    return await (res / USDC_FACTOR).toString();
+  }
+
+  /**
+   * Returns the unix timestamp of the last time the lottery was run.
+   */
+  async getLastLotteryTimestamp() {
+    return await this._lottery_contract.getLastLotteryTimestamp();
   }
 
   /**

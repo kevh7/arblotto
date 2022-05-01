@@ -45,6 +45,7 @@ interface IERC20 {
 contract Lottery {
     struct Entrant {
         uint256 deposit;
+        uint256 totalPrizesWon;
         bool active;
     }
 
@@ -108,30 +109,62 @@ contract Lottery {
         IERC20(erc20Addr).transfer(msg.sender, amt);
     }
 
-    function isAddrInLottery(address addr) public view returns (bool) {
-        return _entrants[addr].active;
+    function getDeposited() public view returns (uint256) {
+        return _entrants[msg.sender].deposit;
     }
 
-    function runLottery(address aaveAddr, address erc20Addr) public {
-        // lottery once an hour
-        require(block.timestamp - _lastLottery > 3600);
+    function getTotalPrizesWon() public view returns (uint256) {
+        return _entrants[msg.sender].totalPrizesWon;
+    }
 
-        // determine winner
-        address winner = _determineWinner();
+    function getCurrentPoolSize() public view returns (uint256) {
+        return _pool;
+    }
 
-        // determine amount of interest accrued since last lottery
+    function getEstimatedNextPrize(address aaveAddr)
+        public
+        view
+        returns (uint256)
+    {
+        return
+            (getAccruedInterest(aaveAddr) * 86400) /
+            (block.timestamp - _lastLottery);
+    }
+
+    function getAccruedInterest(address aaveAddr)
+        public
+        view
+        returns (uint256)
+    {
+        // get total balance currently in Aave (includes interest accrued)
         (uint256 totalCollateralBase, , , , , ) = AaveInterface(aaveAddr)
             .getUserAccountData(address(this));
 
         // Aave reports the collateral in 10^8 units so we reduce it to 10^6
         totalCollateralBase /= 100;
-        uint256 accrued = totalCollateralBase - _pool;
+        return totalCollateralBase - _pool;
+    }
+
+    function getLastLotteryTimestamp() public view returns (uint256) {
+        return _lastLottery;
+    }
+
+    function runLottery(address aaveAddr, address erc20Addr) public {
+        // enforce at least 24 hours between lotteries
+        require(block.timestamp - _lastLottery > 86400);
+
+        // determine winner
+        address winner = _determineWinner();
+
+        // determine amount of interest accrued since last lottery
+        uint256 accrued = getAccruedInterest(aaveAddr);
 
         // withdraw accrued interest from Aave
         AaveInterface(aaveAddr).withdraw(erc20Addr, accrued, address(this));
 
         // send accrued interest to winner
         IERC20(erc20Addr).transfer(winner, (accrued * 99) / 100);
+        _entrants[winner].totalPrizesWon += (accrued * 99) / 100;
 
         // send 1% of interest to the caller as an incentive for running the lottery
         IERC20(erc20Addr).transfer(msg.sender, (accrued * 1) / 100);
