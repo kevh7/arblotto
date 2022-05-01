@@ -9,7 +9,7 @@ import {
     Flex
   } from '@chakra-ui/react';
 import "./Dapp.css"
-import KevinImage from "../assets/blank.jpg"
+import KevinImage from "../assets/kevinimage.jpeg"
 import CharlesImage from "../assets/charlesimage.jpeg"
 
 const TeamPage = ( { account }) => {
@@ -48,11 +48,6 @@ const TeamPage = ( { account }) => {
                             backgroundImage: `url(${KevinImage})`,
                             filter: 'blur(15px)',
                             zIndex: -1,
-                        }}
-                        _groupHover={{
-                            _after: {
-                            filter: 'blur(20px)',
-                            },
                         }}>
                         <Image
                             rounded={'lg'}
@@ -103,11 +98,6 @@ const TeamPage = ( { account }) => {
                             backgroundImage: `url(${CharlesImage})`,
                             filter: 'blur(15px)',
                             zIndex: -1,
-                        }}
-                        _groupHover={{
-                            _after: {
-                            filter: 'blur(20px)',
-                            },
                         }}>
                         <Image
                             rounded={'lg'}
