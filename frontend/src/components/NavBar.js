@@ -19,7 +19,7 @@ const NavBar = ({ account, connectWallet, homePage, prizesPage, aboutPage, teamP
                 {isConnected ? (
                     <Box backgroundColor="green" borderRadius="5px" boxShadow="0px 2px 2px 1px #0F0F0F" padding="10px" color="white" margin="0 15px">Connected</Box>
                 ) : (
-                    <Button backgroundColor="green" borderRadius="5px" boxShadow="0px 2px 2px 1px #0F0F0F" color="white" cursor="pointer" fontFamily="inherit" padding="10px" margin="0px 15px" onClick={connectWallet}>Connect Wallet</Button>
+                    <Box backgroundColor="green" borderRadius="5px" boxShadow="0px 2px 2px 1px #0F0F0F" color="white" cursor="pointer" fontFamily="inherit" padding="10px" margin="0px 15px" onClick={connectWallet}>Connect Wallet</Box>
                 )}
             </Flex>
         </Flex>

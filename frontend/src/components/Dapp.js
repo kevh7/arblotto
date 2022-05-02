@@ -50,8 +50,11 @@ export class Dapp extends React.Component {
       aaveAddr: undefined,
       usdcAddr: undefined,
       page: "home",
+      deposited: 0,
+      totalPrizesWon: 0,
+      estimatedNextPrize: 0,
+      lastLotteryTimeStamp: 0
     };
-
     this.state = this.initialState;
   }
 
@@ -61,9 +64,18 @@ export class Dapp extends React.Component {
     });
   };
   prizesPage = () => {
+    // let deposited = await this.getDeposited();
+    // let totalPrizesWon = await this.getTotalPrizesWon();
+    // let estimatedNextPrize = await this.getEstimatedNextPrize();
+    // let lastLotteryTimeStamp = await this.getLastLotteryTimestamp();
     this.setState({
       page: "prizes",
+      // deposited: deposited,
+      // totalPrizesWon: totalPrizesWon,
+      // estimatedNextPrize: estimatedNextPrize,
+      // lastLotteryTimeStamp: lastLotteryTimeStamp
     });
+    //console.log(deposited)
   };
   aboutPage = () => {
     this.setState({
@@ -135,6 +147,10 @@ export class Dapp extends React.Component {
               account={this.state.selectedAddress}
               runLottery={this.runLottery}
               withdraw={this.withdraw}
+              getDeposited={this.state.deposited}
+              getTotalPrizesWon={this.state.totalPrizesWon}
+              getEstimatedNextPrize={this.state.estimatedNextPrize}
+              getLastLotteryTimestamp={this.state.lastLotteryTimeStamp}
             />
           </div>
           <div className="moving-background"></div>
@@ -367,6 +383,11 @@ export class Dapp extends React.Component {
    */
   async getDeposited() {
     let res = await this._lottery_contract.getDeposited();
+    console.log("1", res)
+    if (isNaN(res)) {
+      res = 0;
+    }
+    console.log("2", res)
     return await (res / USDC_FACTOR).toString();
   }
 
@@ -376,6 +397,9 @@ export class Dapp extends React.Component {
   async getTotalPrizesWon() {
     // Call the contract withdraw function.
     let res = await this._lottery_contract.getTotalPrizesWon();
+    if (isNaN(res)) {
+      res = 0;
+    }
     return await (res / USDC_FACTOR).toString();
   }
 
@@ -385,6 +409,9 @@ export class Dapp extends React.Component {
   async getCurrentPoolSize() {
     // Call the contract withdraw function.
     let res = await this._lottery_contract.getCurrentPoolSize();
+    if (isNaN(res)) {
+      res = 0;
+    }
     return await (res / USDC_FACTOR).toString();
   }
 
@@ -395,6 +422,9 @@ export class Dapp extends React.Component {
     let res = await this._lottery_contract.getEstimatedNextPrize(
       this.state.aaveAddr
     );
+    if (isNaN(res)) {
+      res = 0;
+    }
     return await (res / USDC_FACTOR).toString();
   }
 
