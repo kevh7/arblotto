@@ -30,8 +30,7 @@ const MainLottery = ( { account, deposit }) => {
             alert("Please Enter a Valid Number")
             return;
         }
-        console.log(depositAmount);
-        //deposit(depositAmount);
+        deposit(depositAmount);
     }
 
     return(

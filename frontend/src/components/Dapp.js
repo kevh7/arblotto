@@ -50,10 +50,10 @@ export class Dapp extends React.Component {
       aaveAddr: undefined,
       usdcAddr: undefined,
       page: "home",
-      deposited: 0,
-      totalPrizesWon: 0,
-      estimatedNextPrize: 0,
-      lastLotteryTimeStamp: 0
+      deposited: 1,
+      totalPrizesWon: 1,
+      estimatedNextPrize: 1,
+      lastLotteryTimeStamp: 1
     };
     this.state = this.initialState;
   }
@@ -63,19 +63,18 @@ export class Dapp extends React.Component {
       page: "home",
     });
   };
-  prizesPage = () => {
-    // let deposited = await this.getDeposited();
-    // let totalPrizesWon = await this.getTotalPrizesWon();
-    // let estimatedNextPrize = await this.getEstimatedNextPrize();
-    // let lastLotteryTimeStamp = await this.getLastLotteryTimestamp();
+  prizesPage = async () => {
+    let deposited = await this.getUserDeposit();
+    let totalPrizesWon = await this.getUserTotalPrizesWon();
+    let estimatedNextPrize = await this.getEstimatedNextPrize();
+    let lastLotteryTimeStamp = await this.getLastLotteryTimestamp();
     this.setState({
       page: "prizes",
-      // deposited: deposited,
-      // totalPrizesWon: totalPrizesWon,
-      // estimatedNextPrize: estimatedNextPrize,
-      // lastLotteryTimeStamp: lastLotteryTimeStamp
+      deposited: deposited,
+      totalPrizesWon: totalPrizesWon,
+      estimatedNextPrize: estimatedNextPrize,
+      lastLotteryTimeStamp: lastLotteryTimeStamp
     });
-    //console.log(deposited)
   };
   aboutPage = () => {
     this.setState({
@@ -206,7 +205,7 @@ export class Dapp extends React.Component {
               aboutPage={this.aboutPage}
               teamPage={this.teamPage}
             />
-            <MainLottery account={this.state.selectedAddress} />
+            <MainLottery account={this.state.selectedAddress} deposit={this.deposit}/>
           </div>
           <div className="moving-background"></div>
         </div>
