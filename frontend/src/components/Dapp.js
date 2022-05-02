@@ -363,33 +363,47 @@ export class Dapp extends React.Component {
   }
 
   /**
-   * Returns amount the user currently has deposited.
+   * Returns the user's current deposit.
    */
-  async getDeposited() {
-    let res = await this._lottery_contract.getDeposited();
+  async getUserDeposit() {
+    let res = await this._lottery_contract.getUserDeposit();
     return await (res / USDC_FACTOR).toString();
   }
 
   /**
-   * Returns amount the total amount of prizes this user has ever won.
+   * Returns the user's current active deposit.
    */
-  async getTotalPrizesWon() {
-    // Call the contract withdraw function.
-    let res = await this._lottery_contract.getTotalPrizesWon();
+  async getUserActiveDeposit() {
+    let res = await this._lottery_contract.getUserActiveDeposit();
     return await (res / USDC_FACTOR).toString();
   }
 
   /**
-   * Returns amount the current size of the pool (all user deposits).
+   * Returns the user's total prizes won.
    */
-  async getCurrentPoolSize() {
-    // Call the contract withdraw function.
-    let res = await this._lottery_contract.getCurrentPoolSize();
+  async getUserTotalPrizesWon() {
+    let res = await this._lottery_contract.getUserTotalPrizesWon();
     return await (res / USDC_FACTOR).toString();
   }
 
   /**
-   * Returns the extrapolated size of the next lottery.
+   * Returns the current size of the pool.
+   */
+  async getPool() {
+    let res = await this._lottery_contract.getPool();
+    return await (res / USDC_FACTOR).toString();
+  }
+
+  /**
+   * Returns the current size of the active pool.
+   */
+  async getActivePool() {
+    let res = await this._lottery_contract.getActivePool();
+    return await (res / USDC_FACTOR).toString();
+  }
+
+  /**
+   * Returns the estimated next prize size.
    */
   async getEstimatedNextPrize() {
     let res = await this._lottery_contract.getEstimatedNextPrize(
@@ -399,7 +413,7 @@ export class Dapp extends React.Component {
   }
 
   /**
-   * Returns the unix timestamp of the last time the lottery was run.
+   * Returns the unix timestamp of the last lottery.
    */
   async getLastLotteryTimestamp() {
     let res = await this._lottery_contract.getLastLotteryTimestamp();

@@ -44,166 +44,190 @@ interface IERC20 {
 
 contract Lottery {
     struct Entrant {
+        // The amount the user currently has deposited
         uint256 deposit;
+        // The amount the user has deposited that is active in the current lottery
+        uint256 depositActive;
+        // The total amount the user has ever won
         uint256 totalPrizesWon;
+        // Whether this account has ever entered the lottery
         bool active;
     }
-
-    // List of all addrs
-    address[] private _addrs;
 
     // Maps address -> entrant structs
     mapping(address => Entrant) private _entrants;
 
+    // List of all addresses that have ever entered the lottery
+    address[] private _addrs;
+
     // Total balance deposited
-    uint256 _pool;
+    uint256 private _pool;
 
     // Total balance active
-    uint256 _active_pool;
+    uint256 private _poolActive;
 
     // Unix timestamp of last lottery
-    uint256 _lastLottery = 0;
+    uint256 private _lastLottery = 0;
 
-    // amt should be in 10^6 units (eg. 10^6 = 1 USDC)
+    // Minimum number of seconds between lotteries
+    uint256 constant lotteryInterval = 86400;
+
+    /**
+     * @dev Deposit USDC into the contract, thus entering the lottery.
+     * @param aaveAddr Address of Aave contract.
+     * @param usdcAddr Address of USDC contract.
+     * @param amt Amount of USDC to deposit in units where 10^6 units = 1 USDC.
+     */
     function deposit(
         address aaveAddr,
-        address erc20Addr,
+        address usdcAddr,
         uint256 amt
     ) public {
         require(amt > 0);
-        require(!_entrants[msg.sender].active);
 
-        IERC20 token = IERC20(erc20Addr);
+        IERC20 usdc = IERC20(usdcAddr);
 
-        // transfer user's funds into our contract
-        token.transferFrom(msg.sender, address(this), amt);
+        // Transfer user's USDC into our contract
+        usdc.transferFrom(msg.sender, address(this), amt);
 
-        // approve funds to be sent to Aave
-        token.approve(aaveAddr, amt);
+        // Approve USDC to be sent to Aave
+        usdc.approve(aaveAddr, amt);
 
-        // supply funds to Aave
-        AaveInterface(aaveAddr).supply(erc20Addr, amt, address(this), 0);
+        // Supply USDC to Aave
+        AaveInterface(aaveAddr).supply(usdcAddr, amt, address(this), 0);
 
-        // record user deposit but mark as inactive
+        // Add address to list and mark it as seen
+        if (!_entrants[msg.sender].active) {
+            _addrs.push(msg.sender);
+            _entrants[msg.sender].active = true;
+        }
+
+        // Record user deposit but mark it as inactive
+        // Deposits only become active starting with the next lottery
         _pool += amt;
-        _addrs.push(msg.sender);
         _entrants[msg.sender].deposit += amt;
     }
 
-    function withdraw(address aaveAddr, address erc20Addr) public {
+    /**
+     * @dev Withdraw all USDC from the contract, thus exiting the lottery.
+     * @param aaveAddr Address of Aave contract.
+     * @param usdcAddr Address of USDC contract.
+     */
+    function withdraw(address aaveAddr, address usdcAddr) public {
         require(_entrants[msg.sender].deposit > 0);
 
-        uint256 amt = _entrants[msg.sender].deposit;
-        if (_entrants[msg.sender].active) {
-            _active_pool -= amt;
-        }
-        _pool -= amt;
+        uint256 userDeposit = _entrants[msg.sender].deposit;
 
-        // remove user from lottery
-        delete _entrants[msg.sender];
+        // Withdraw user's funds from Aave
+        AaveInterface(aaveAddr).withdraw(usdcAddr, userDeposit, address(this));
 
-        // withdraw users funds (amt) from Aave
-        AaveInterface(aaveAddr).withdraw(erc20Addr, amt, address(this));
+        _pool -= userDeposit;
+        _poolActive -= _entrants[msg.sender].depositActive;
 
-        // transfer funds to user
-        IERC20(erc20Addr).transfer(msg.sender, amt);
+        _entrants[msg.sender].deposit = 0;
+        _entrants[msg.sender].depositActive = 0;
+
+        // Transfer withdrawn funds to user
+        IERC20(usdcAddr).transfer(msg.sender, userDeposit);
     }
 
-    function getDeposited() public view returns (uint256) {
-        return _entrants[msg.sender].deposit;
+    /**
+     * @dev Run the lottery.
+     * @param aaveAddr Address of Aave contract.
+     * @param usdcAddr Address of USDC contract.
+     */
+    function runLottery(address aaveAddr, address usdcAddr) public {
+        // Enforce minimum interval between lotteries
+        require(block.timestamp - _lastLottery >= lotteryInterval);
+
+        // Determine winner
+        address winner = _determineWinner();
+
+        // Determine amount of interest accrued since last lottery
+        uint256 accrued = getAccruedInterest(aaveAddr);
+
+        // Withdraw the accrued interest from Aave
+        AaveInterface(aaveAddr).withdraw(usdcAddr, accrued, address(this));
+
+        // Send ~ 99% of the accrued interest to the winner as the prize
+        uint256 prize = (accrued * 99) / 100;
+        IERC20(usdcAddr).transfer(winner, prize);
+        _entrants[winner].totalPrizesWon += prize;
+
+        // Send ~ 1% of the accrued interest to the caller as an incentive for running the lottery
+        IERC20(usdcAddr).transfer(msg.sender, accrued - prize);
+
+        // Add all inactive deposits into lottery
+        _includeAllInLottery();
+
+        // Update last lottery timestamp
+        _lastLottery = block.timestamp;
     }
 
-    function getTotalPrizesWon() public view returns (uint256) {
-        return _entrants[msg.sender].totalPrizesWon;
-    }
-
-    function getCurrentPoolSize() public view returns (uint256) {
-        return _pool;
-    }
-
-    function getEstimatedNextPrize(address aaveAddr)
-        public
-        view
-        returns (uint256)
-    {
-        return
-            (getAccruedInterest(aaveAddr) * 86400) /
-            (block.timestamp - _lastLottery);
-    }
-
+    /**
+     * @dev Returns the current amount of interest accrued.
+     * @param aaveAddr Address of Aave contract.
+     */
     function getAccruedInterest(address aaveAddr)
         public
         view
         returns (uint256)
     {
-        // get total balance currently in Aave (includes interest accrued)
+        // Get the total balance currently in Aave (includes interest accrued)
         (uint256 totalCollateralBase, , , , , ) = AaveInterface(aaveAddr)
             .getUserAccountData(address(this));
 
         // Aave reports the collateral in 10^8 units so we reduce it to 10^6
         totalCollateralBase /= 100;
+
+        // Interest accrued is the additional amount above our total deposit
         return totalCollateralBase - _pool;
     }
 
-    function getLastLotteryTimestamp() public view returns (uint256) {
-        return _lastLottery;
-    }
-
-    function runLottery(address aaveAddr, address erc20Addr) public {
-        // enforce at least 24 hours between lotteries
-        require(block.timestamp - _lastLottery > 86400);
-
-        // determine winner
-        address winner = _determineWinner();
-
-        // determine amount of interest accrued since last lottery
-        uint256 accrued = getAccruedInterest(aaveAddr);
-
-        // withdraw accrued interest from Aave
-        AaveInterface(aaveAddr).withdraw(erc20Addr, accrued, address(this));
-
-        // send accrued interest to winner
-        IERC20(erc20Addr).transfer(winner, (accrued * 99) / 100);
-        _entrants[winner].totalPrizesWon += (accrued * 99) / 100;
-
-        // send 1% of interest to the caller as an incentive for running the lottery
-        IERC20(erc20Addr).transfer(msg.sender, (accrued * 1) / 100);
-
-        // add all inactive users into lottery
-        _includeInLottery();
-
-        _lastLottery = block.timestamp;
-    }
-
-    function _includeInLottery() public {
+    /**
+     * @dev Include all deposits into the lottery.
+     */
+    function _includeAllInLottery() public {
         for (uint256 i = 0; i < _addrs.length; i++) {
-            if (
-                _entrants[_addrs[i]].active || _entrants[_addrs[i]].deposit == 0
-            ) {
-                continue;
-            }
-            _entrants[_addrs[i]].active = true;
-            _active_pool += _entrants[_addrs[i]].deposit;
+            _entrants[_addrs[i]].depositActive = _entrants[_addrs[i]].deposit;
         }
+        _poolActive = _pool;
     }
 
-    // weighted random selection
+    /**
+     * @dev Randomly select a winner, where each address's chance of winning
+     *      is proportional to their share of the pool.
+     */
     function _determineWinner() private view returns (address) {
+        // Edge case: possible that all users withdrew all funds before the lottery
+        // This effectively carries forward the prize to the next lottery
+        if (_poolActive == 0) {
+            return address(this);
+        }
+
+        // Generate a random value in the range [0, _poolActive)
+        uint256 randValue = _random(_poolActive);
+
+        // Track cumulative sum of active deposits
         uint256 cumulative = 0;
+
         for (uint256 i = 0; i < _addrs.length; i++) {
-            if (!_entrants[_addrs[i]].active) {
-                continue;
-            }
-            cumulative += _entrants[_addrs[i]].deposit;
-            if (cumulative >= _random(_active_pool)) {
+            cumulative += _entrants[_addrs[i]].depositActive;
+            if (cumulative > randValue) {
                 return _addrs[i];
             }
         }
-        return _addrs[_addrs.length - 1];
+
+        // Should never reach here.
+        revert("no winner");
     }
 
-    // returns a random number in the range [0, upperBound)
-    // NOTE: this way of generating random numbers is insecure but good enough for now
+    /**
+     * @dev Returns a random uint256 in the range [0, upperBound).
+     * @param upperBound Upper bound of the range.
+     * NOTE: This way of generating random numbers is can technically be exploited,
+     *       but is good enough for now in lieu of a Chainlink VRF orcale on Arbitrum.
+     */
     function _random(uint256 upperBound) private view returns (uint256) {
         return
             uint256(
@@ -215,5 +239,61 @@ contract Lottery {
                     )
                 )
             ) % upperBound;
+    }
+
+    /**
+     * @dev Returns the user's current deposit.
+     */
+    function getUserDeposit() public view returns (uint256) {
+        return _entrants[msg.sender].deposit;
+    }
+
+    /**
+     * @dev Returns the user's current active deposit.
+     */
+    function getUserActiveDeposit() public view returns (uint256) {
+        return _entrants[msg.sender].depositActive;
+    }
+
+    /**
+     * @dev Returns the user's total prizes won.
+     */
+    function getUserTotalPrizesWon() public view returns (uint256) {
+        return _entrants[msg.sender].totalPrizesWon;
+    }
+
+    /**
+     * @dev Returns the current size of the pool.
+     */
+    function getPool() public view returns (uint256) {
+        return _pool;
+    }
+
+    /**
+     * @dev Returns the current size of the active pool.
+     */
+    function getActivePool() public view returns (uint256) {
+        return _poolActive;
+    }
+
+    /**
+     * @dev Returns the estimated next prize size.
+     * @param aaveAddr Address of Aave contract.
+     */
+    function getEstimatedNextPrize(address aaveAddr)
+        public
+        view
+        returns (uint256)
+    {
+        return
+            (((getAccruedInterest(aaveAddr) * lotteryInterval) /
+                (block.timestamp - _lastLottery)) * 99) / 100;
+    }
+
+    /**
+     * @dev Returns the unix timestamp of the last lottery.
+     */
+    function getLastLotteryTimestamp() public view returns (uint256) {
+        return _lastLottery;
     }
 }
