@@ -73,28 +73,28 @@ contract Lottery {
     uint256 constant lotteryInterval = 86400;
 
     /**
-     * @dev Deposit USDC into the contract, thus entering the lottery.
+     * @dev Deposit DAI into the contract, thus entering the lottery.
      * @param aaveAddr Address of Aave contract.
-     * @param usdcAddr Address of USDC contract.
-     * @param amt Amount of USDC to deposit in units where 10^6 units = 1 USDC.
+     * @param daiAddr Address of DAI contract.
+     * @param amt Amount of DAI to deposit in units where 10^6 units = 1 DAI.
      */
     function deposit(
         address aaveAddr,
-        address usdcAddr,
+        address daiAddr,
         uint256 amt
     ) public {
         require(amt > 0);
 
-        IERC20 usdc = IERC20(usdcAddr);
+        IERC20 dai = IERC20(daiAddr);
 
-        // Transfer user's USDC into our contract
-        usdc.transferFrom(msg.sender, address(this), amt);
+        // Transfer user's DAI into our contract
+        dai.transferFrom(msg.sender, address(this), amt);
 
-        // Approve USDC to be sent to Aave
-        usdc.approve(aaveAddr, amt);
+        // Approve DAI to be sent to Aave
+        dai.approve(aaveAddr, amt);
 
-        // Supply USDC to Aave
-        AaveInterface(aaveAddr).supply(usdcAddr, amt, address(this), 0);
+        // Supply DAI to Aave
+        AaveInterface(aaveAddr).supply(daiAddr, amt, address(this), 0);
 
         // Add address to list and mark it as seen
         if (!_entrants[msg.sender].active) {
@@ -109,17 +109,17 @@ contract Lottery {
     }
 
     /**
-     * @dev Withdraw all USDC from the contract, thus exiting the lottery.
+     * @dev Withdraw all DAI from the contract, thus exiting the lottery.
      * @param aaveAddr Address of Aave contract.
-     * @param usdcAddr Address of USDC contract.
+     * @param daiAddr Address of DAI contract.
      */
-    function withdraw(address aaveAddr, address usdcAddr) public {
+    function withdraw(address aaveAddr, address daiAddr) public {
         require(_entrants[msg.sender].deposit > 0);
 
         uint256 userDeposit = _entrants[msg.sender].deposit;
 
         // Withdraw user's funds from Aave
-        AaveInterface(aaveAddr).withdraw(usdcAddr, userDeposit, address(this));
+        AaveInterface(aaveAddr).withdraw(daiAddr, userDeposit, address(this));
 
         _pool -= userDeposit;
         _poolActive -= _entrants[msg.sender].depositActive;
@@ -128,15 +128,15 @@ contract Lottery {
         _entrants[msg.sender].depositActive = 0;
 
         // Transfer withdrawn funds to user
-        IERC20(usdcAddr).transfer(msg.sender, userDeposit);
+        IERC20(daiAddr).transfer(msg.sender, userDeposit);
     }
 
     /**
      * @dev Run the lottery.
      * @param aaveAddr Address of Aave contract.
-     * @param usdcAddr Address of USDC contract.
+     * @param daiAddr Address of DAI contract.
      */
-    function runLottery(address aaveAddr, address usdcAddr) public {
+    function runLottery(address aaveAddr, address daiAddr) public {
         // Enforce minimum interval between lotteries
         require(block.timestamp - _lastLottery >= lotteryInterval);
 
@@ -147,15 +147,15 @@ contract Lottery {
         uint256 accrued = getAccruedInterest(aaveAddr);
 
         // Withdraw the accrued interest from Aave
-        AaveInterface(aaveAddr).withdraw(usdcAddr, accrued, address(this));
+        AaveInterface(aaveAddr).withdraw(daiAddr, accrued, address(this));
 
         // Send ~ 99% of the accrued interest to the winner as the prize
         uint256 prize = (accrued * 99) / 100;
-        IERC20(usdcAddr).transfer(winner, prize);
+        IERC20(daiAddr).transfer(winner, prize);
         _entrants[winner].totalPrizesWon += prize;
 
         // Send ~ 1% of the accrued interest to the caller as an incentive for running the lottery
-        IERC20(usdcAddr).transfer(msg.sender, accrued - prize);
+        IERC20(daiAddr).transfer(msg.sender, accrued - prize);
 
         // Add all inactive deposits into lottery
         _includeAllInLottery();
@@ -177,8 +177,8 @@ contract Lottery {
         (uint256 totalCollateralBase, , , , , ) = AaveInterface(aaveAddr)
             .getUserAccountData(address(this));
 
-        // Aave reports the collateral in 10^8 units so we reduce it to 10^6
-        totalCollateralBase /= 100;
+        // Aave reports the collateral in 10^8 units so we expand it to 10^18
+        totalCollateralBase *= 10**10;
 
         // Interest accrued is the additional amount above our total deposit
         return totalCollateralBase - _pool;

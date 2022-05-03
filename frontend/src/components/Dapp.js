@@ -29,13 +29,13 @@ const HARDHAT_NETWORK_ID = "1337";
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
 const AAVE_MAINNET_ADDR = "0x794a61358D6845594F94dc1DB02A252b5b4814aD";
-const USDC_MAINNET_ADDR = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8";
+const DAI_MAINNET_ADDR = "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1";
 
 const AAVE_TESTNET_ADDR = "0x9C55a3C34de5fd46004Fa44a55490108f7cE388F";
-const USDC_TESTNET_ADDR = "0x774382EF196781400a335AF0c4219eEd684ED713";
+const DAI_TESTNET_ADDR = "0x200c2386A02cbA50563b7b64615B43Ab1874a06e";
 
-// Aave represents all values by the factor of 10^6 units = 1 USDC
-const USDC_FACTOR = BigNumber.from(1000000);
+// Aave represents all values by the factor of 10^18 units = 1 DAI
+const DAI_FACTOR = ethers.utils.parseUnits("1", 18);
 
 export class Dapp extends React.Component {
   constructor(props) {
@@ -48,12 +48,12 @@ export class Dapp extends React.Component {
       transactionError: undefined,
       networkError: undefined,
       aaveAddr: undefined,
-      usdcAddr: undefined,
+      daiAddr: undefined,
       page: "home",
       deposited: 1,
       totalPrizesWon: 1,
       estimatedNextPrize: 1,
-      lastLotteryTimeStamp: 1
+      lastLotteryTimeStamp: 1,
     };
     this.state = this.initialState;
   }
@@ -73,7 +73,7 @@ export class Dapp extends React.Component {
       deposited: deposited,
       totalPrizesWon: totalPrizesWon,
       estimatedNextPrize: estimatedNextPrize,
-      lastLotteryTimeStamp: lastLotteryTimeStamp
+      lastLotteryTimeStamp: lastLotteryTimeStamp,
     });
   };
   aboutPage = () => {
@@ -205,7 +205,10 @@ export class Dapp extends React.Component {
               aboutPage={this.aboutPage}
               teamPage={this.teamPage}
             />
-            <MainLottery account={this.state.selectedAddress} deposit={this.deposit}/>
+            <MainLottery
+              account={this.state.selectedAddress}
+              deposit={this.deposit}
+            />
           </div>
           <div className="moving-background"></div>
         </div>
@@ -336,24 +339,24 @@ export class Dapp extends React.Component {
       this._provider.getSigner(0)
     );
 
-    // Initialize the USDC token contract.
-    this._usdc_contract = new ethers.Contract(
-      this.state.usdcAddr,
+    // Initialize the DAI token contract.
+    this._dai_contract = new ethers.Contract(
+      this.state.daiAddr,
       IERC20Artifact.abi,
       this._provider.getSigner(0)
     );
   }
 
   /**
-   * Deposit USDC into the contract.
-   * @param amt the amount of USDC to deposit
+   * Deposit DAI into the contract.
+   * @param amt the amount of DAI to deposit
    */
   async deposit(amt) {
     amt = BigNumber.from(amt);
-    amt = amt * USDC_FACTOR;
+    amt = amt.mul(DAI_FACTOR);
 
-    // First, approve the USDC transfer to the lottery contract
-    await this._doTransaction(this._usdc_contract.approve, [
+    // First, approve the DAI transfer to the lottery contract
+    await this._doTransaction(this._dai_contract.approve, [
       contractAddress.Lottery,
       amt,
     ]);
@@ -361,19 +364,19 @@ export class Dapp extends React.Component {
     // Then do the actual deposit
     await this._doTransaction(this._lottery_contract.deposit, [
       this.state.aaveAddr,
-      this.state.usdcAddr,
+      this.state.daiAddr,
       amt,
     ]);
   }
 
   /**
-   * Withdraw all your USDC from the contract.
+   * Withdraw all your DAI from the contract.
    */
   async withdraw() {
     // Call the contract withdraw function.
     await this._doTransaction(this._lottery_contract.withdraw, [
       this.state.aaveAddr,
-      this.state.usdcAddr,
+      this.state.daiAddr,
     ]);
   }
 
@@ -382,7 +385,7 @@ export class Dapp extends React.Component {
    */
   async getUserDeposit() {
     let res = await this._lottery_contract.getUserDeposit();
-    return await (res / USDC_FACTOR).toString();
+    return await res.div(DAI_FACTOR).toString();
   }
 
   /**
@@ -390,7 +393,7 @@ export class Dapp extends React.Component {
    */
   async getUserActiveDeposit() {
     let res = await this._lottery_contract.getUserActiveDeposit();
-    return await (res / USDC_FACTOR).toString();
+    return await res.div(DAI_FACTOR).toString();
   }
 
   /**
@@ -398,7 +401,7 @@ export class Dapp extends React.Component {
    */
   async getUserTotalPrizesWon() {
     let res = await this._lottery_contract.getUserTotalPrizesWon();
-    return await (res / USDC_FACTOR).toString();
+    return await res.div(DAI_FACTOR).toString();
   }
 
   /**
@@ -406,7 +409,7 @@ export class Dapp extends React.Component {
    */
   async getPool() {
     let res = await this._lottery_contract.getPool();
-    return await (res / USDC_FACTOR).toString();
+    return await res.div(DAI_FACTOR).toString();
   }
 
   /**
@@ -414,7 +417,7 @@ export class Dapp extends React.Component {
    */
   async getActivePool() {
     let res = await this._lottery_contract.getActivePool();
-    return await (res / USDC_FACTOR).toString();
+    return await res.div(DAI_FACTOR).toString();
   }
 
   /**
@@ -427,7 +430,7 @@ export class Dapp extends React.Component {
     if (isNaN(res)) {
       res = 0;
     }
-    return await (res / USDC_FACTOR).toString();
+    return await res.div(DAI_FACTOR).toString();
   }
 
   /**
@@ -444,7 +447,7 @@ export class Dapp extends React.Component {
   async runLottery() {
     await this._doTransaction(this._lottery_contract.runLottery, [
       this.state.aaveAddr,
-      this.state.usdcAddr,
+      this.state.daiAddr,
     ]);
   }
 
@@ -543,10 +546,10 @@ export class Dapp extends React.Component {
   _checkNetwork() {
     if (window.ethereum.networkVersion === ARBITRUM_MAINNET_NETWORK_ID) {
       this.state.aaveAddr = AAVE_MAINNET_ADDR;
-      this.state.usdcAddr = USDC_MAINNET_ADDR;
+      this.state.daiAddr = DAI_MAINNET_ADDR;
     } else if (window.ethereum.networkVersion === ARBITRUM_TESTNET_NETWORK_ID) {
       this.state.aaveAddr = AAVE_TESTNET_ADDR;
-      this.state.usdcAddr = USDC_TESTNET_ADDR;
+      this.state.daiAddr = DAI_TESTNET_ADDR;
     } else if (!(window.ethereum.networkVersion === HARDHAT_NETWORK_ID)) {
       this.setState({
         networkError:
