@@ -21,6 +21,9 @@ import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import PrizePage from "./PrizePage";
 import AboutPage from "./AboutPage";
 import TeamPage from "./TeamPage";
+import SuccessDeposit from "./SuccessDeposit";
+import SuccessWithdraw from "./SuccessWithdraw"
+import SuccessRunLottery from "./SuccessRunLottery";
 
 const ARBITRUM_MAINNET_NETWORK_ID = "42161";
 const ARBITRUM_TESTNET_NETWORK_ID = "421611";
@@ -54,6 +57,7 @@ export class Dapp extends React.Component {
       totalPrizesWon: 1,
       estimatedNextPrize: 1,
       lastLotteryTimeStamp: 1,
+      successMessage: undefined,
     };
     this.state = this.initialState;
   }
@@ -205,7 +209,61 @@ export class Dapp extends React.Component {
               aboutPage={this.aboutPage}
               teamPage={this.teamPage}
             />
-            <MainLottery account={this.state.selectedAddress} deposit={(props) => this.deposit(props)}/>
+            <MainLottery account={this.state.selectedAddress} deposit={this.deposit}/>
+          </div>
+          <div className="moving-background"></div>
+        </div>
+      );
+    }
+    if (this.state.page === "successDeposit") {
+      return (
+        <div className="overlay">
+          <div className="Dapp">
+            <NavBar
+              account={this.state.selectedAddress}
+              connectWallet={() => this._connectWallet()}
+              homePage={this.homePage}
+              prizesPage={this.prizesPage}
+              aboutPage={this.aboutPage}
+              teamPage={this.teamPage}
+            />
+            <SuccessDeposit/>
+          </div>
+          <div className="moving-background"></div>
+        </div>
+      );
+    }
+    if (this.state.page === "successWithdraw") {
+      return (
+        <div className="overlay">
+          <div className="Dapp">
+            <NavBar
+              account={this.state.selectedAddress}
+              connectWallet={() => this._connectWallet()}
+              homePage={this.homePage}
+              prizesPage={this.prizesPage}
+              aboutPage={this.aboutPage}
+              teamPage={this.teamPage}
+            />
+            <SuccessWithdraw/>
+          </div>
+          <div className="moving-background"></div>
+        </div>
+      );
+    }
+    if (this.state.page === "successRunLottery") {
+      return (
+        <div className="overlay">
+          <div className="Dapp">
+            <NavBar
+              account={this.state.selectedAddress}
+              connectWallet={() => this._connectWallet()}
+              homePage={this.homePage}
+              prizesPage={this.prizesPage}
+              aboutPage={this.aboutPage}
+              teamPage={this.teamPage}
+            />
+            <SuccessRunLottery/>
           </div>
           <div className="moving-background"></div>
         </div>
@@ -347,7 +405,7 @@ export class Dapp extends React.Component {
    * Deposit DAI into the contract.
    * @param amt the amount of DAI to deposit
    */
-  async deposit(amt) {
+  deposit = async (amt) => {
     amt = BigNumber.from(amt);
     amt = amt.mul(DAI_FACTOR);
 
@@ -362,7 +420,10 @@ export class Dapp extends React.Component {
       this.state.aaveAddr,
       this.state.daiAddr,
       amt,
-    ]);
+    ])
+    this.setState({
+      page: "successDeposit",
+    });
   }
 
   /**
@@ -374,6 +435,9 @@ export class Dapp extends React.Component {
       this.state.aaveAddr,
       this.state.daiAddr,
     ]);
+    this.setState({
+      page: "successWithdraw",
+    });
   }
 
   /**
@@ -454,6 +518,9 @@ export class Dapp extends React.Component {
       this.state.aaveAddr,
       this.state.daiAddr,
     ]);
+    this.setState({
+      page: "successRunLottery",
+    });
   }
 
   /**

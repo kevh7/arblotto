@@ -3,7 +3,6 @@ import { Box, Button, Flex, Input, Text } from '@chakra-ui/react';
 import "./Dapp.css"
 
 const AboutPage = ( { account }) => {
-    const isConnected = Boolean(account);
 
     return(
         <Flex justify="center" align="center" height="100vh" paddingBottom="150px">
