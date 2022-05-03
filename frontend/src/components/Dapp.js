@@ -144,7 +144,7 @@ export class Dapp extends React.Component {
             />
             <PrizePage
               account={this.state.selectedAddress}
-              runLottery={this.runLottery}
+              runLottery={() => this.runLottery()}
               withdraw={() => this.withdraw()}
               getDeposited={this.state.deposited}
               getTotalPrizesWon={this.state.totalPrizesWon}
