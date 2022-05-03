@@ -9,27 +9,27 @@ const PrizePage = ( { account, runLottery, withdraw, getDeposited, getTotalPrize
             <Box width="520px">
                 <div>
                     <Text fontSize="20px" marginBottom="2vh" textShadow="0 2px #000000">Today's Prize Pool (estimated)</Text>
-                    <Text fontSize="30px" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">{getEstimatedNextPrize} USDC</Text>
+                    <Text fontSize="30px" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">{getEstimatedNextPrize} DAI</Text>
                     <Button backgroundColor="green" borderRadius="5px" boxShadow="0px 2px 2px 1px #0F0F0F" color="white" cursor="pointer" fontFamily="inherit" padding="15px" margin="30px 15px" onClick={runLottery}>Run Lottery</Button>
                     <Text fontSize="20px" fontFamily="VT323" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">Each day, the first person to click "Run Lottery" runs the lottery for everyone and receives a small reward as compensation</Text>
                 </div>
                 {isConnected ? (
                     <div>
                         <HStack spacing="10vh" justify="center" marginTop="8vh">
-                        <Box width="20vh" justify="center" align="center">
+                        <Box width="30vh" justify="center" align="center">
                             <Flex align="center" justify="center" marginTop="50px">
-                                <Text fontSize="20px" marginBottom="2vh" marginLeft="10vh" marginRight="10vh" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">Your Tickets</Text>
+                                <Text fontSize="20px" marginBottom="2vh" marginLeft="10vh" marginRight="10vh" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">Your Tickets' Value</Text>
                             </Flex>
                             <Flex align="center" justify="center">
-                                <Text fontSize="30px" align="left" justify="left" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">{getDeposited}</Text>
+                                <Text fontSize="30px" align="left" justify="left" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">{getDeposited} DAI</Text>
                             </Flex>
                         </Box>
-                        <Box width="20vh" justify="center" align="center">
+                        <Box width="30vh" justify="center" align="center">
                             <Flex align="center" justify="center" marginTop="50px">
                                 <Text fontSize="20px" marginBottom="2vh" marginLeft="10vh" marginRight="10vh" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">Your Prizes Won</Text>
                             </Flex>
                             <Flex align="center" justify="center">
-                                <Text fontSize="30px" align="left" justify="left" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">{getTotalPrizesWon} USDC</Text>
+                                <Text fontSize="30px" align="left" justify="left" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">{getTotalPrizesWon} DAI</Text>
                             </Flex>
                         </Box>
                         </HStack>

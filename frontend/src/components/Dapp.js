@@ -53,7 +53,8 @@ export class Dapp extends React.Component {
       deposited: 1,
       totalPrizesWon: 1,
       estimatedNextPrize: 1,
-      lastLotteryTimeStamp: 1
+      lastLotteryTimeStamp: 1,
+      _usdc_contract: undefined
     };
     this.state = this.initialState;
   }
@@ -145,7 +146,7 @@ export class Dapp extends React.Component {
             <PrizePage
               account={this.state.selectedAddress}
               runLottery={this.runLottery}
-              withdraw={this.withdraw}
+              withdraw={() => this.withdraw()}
               getDeposited={this.state.deposited}
               getTotalPrizesWon={this.state.totalPrizesWon}
               getEstimatedNextPrize={this.state.estimatedNextPrize}
@@ -205,7 +206,7 @@ export class Dapp extends React.Component {
               aboutPage={this.aboutPage}
               teamPage={this.teamPage}
             />
-            <MainLottery account={this.state.selectedAddress} deposit={this.deposit}/>
+            <MainLottery account={this.state.selectedAddress} deposit={(props) => this.deposit(props)}/>
           </div>
           <div className="moving-background"></div>
         </div>
@@ -320,7 +321,6 @@ export class Dapp extends React.Component {
     this.setState({
       selectedAddress: userAddress,
     });
-
     this._initializeEthers();
     this._startPollingData();
   }
@@ -351,7 +351,7 @@ export class Dapp extends React.Component {
   async deposit(amt) {
     amt = BigNumber.from(amt);
     amt = amt * USDC_FACTOR;
-
+    
     // First, approve the USDC transfer to the lottery contract
     await this._doTransaction(this._usdc_contract.approve, [
       contractAddress.Lottery,
@@ -382,6 +382,7 @@ export class Dapp extends React.Component {
    */
   async getUserDeposit() {
     let res = await this._lottery_contract.getUserDeposit();
+    console.log(this._lottery_contract)
     return await (res / USDC_FACTOR).toString();
   }
 
@@ -421,13 +422,14 @@ export class Dapp extends React.Component {
    * Returns the estimated next prize size.
    */
   async getEstimatedNextPrize() {
-    let res = await this._lottery_contract.getEstimatedNextPrize(
-      this.state.aaveAddr
-    );
-    if (isNaN(res)) {
-      res = 0;
-    }
-    return await (res / USDC_FACTOR).toString();
+    // let res = await this._lottery_contract.getEstimatedNextPrize(
+    //   this.state.aaveAddr
+    // );
+    // if (isNaN(res)) {
+    //   res = 0;
+    // }
+    // return await (res / USDC_FACTOR).toString();
+    return 0;
   }
 
   /**
