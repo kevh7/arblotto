@@ -38,7 +38,7 @@ const MainLottery = ( { account, deposit }) => {
             <Box width="520px">
                 <div>
                     <Text fontSize="48px" textShadow="0 5px #000000">ArbLotto</Text>
-                    <Text fontSize="30px" letterSpacing="-5.5%" fontFamily="VT323" textShadow="0 2px 2px #000000">A No-Loss Lottery on the Arbitrum Blockchain</Text>
+                    <Text fontSize="30px" letterSpacing="-5.5%" fontFamily="VT323" textShadow="0 2px 2px #000000">A Decentralized No-Loss Lottery on Arbitrum</Text>
                 </div>
                 {isConnected ? (
                     <div>

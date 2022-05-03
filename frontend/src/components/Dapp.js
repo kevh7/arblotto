@@ -22,7 +22,7 @@ import PrizePage from "./PrizePage";
 import AboutPage from "./AboutPage";
 import TeamPage from "./TeamPage";
 import SuccessDeposit from "./SuccessDeposit";
-import SuccessWithdraw from "./SuccessWithdraw"
+import SuccessWithdraw from "./SuccessWithdraw";
 import SuccessRunLottery from "./SuccessRunLottery";
 import Error from "./Error";
 
@@ -84,7 +84,7 @@ export class Dapp extends React.Component {
       totalPrizesWon: totalPrizesWon,
       estimatedNextPrize: estimatedNextPrize,
       lastLotteryTimeStamp: lastLotteryTimeStamp.toString(),
-      isNewLotteryTime: isNewLotteryTime
+      isNewLotteryTime: isNewLotteryTime,
     });
   };
   aboutPage = () => {
@@ -217,7 +217,10 @@ export class Dapp extends React.Component {
               aboutPage={this.aboutPage}
               teamPage={this.teamPage}
             />
-            <MainLottery account={this.state.selectedAddress} deposit={this.deposit}/>
+            <MainLottery
+              account={this.state.selectedAddress}
+              deposit={this.deposit}
+            />
           </div>
           <div className="moving-background"></div>
         </div>
@@ -235,7 +238,7 @@ export class Dapp extends React.Component {
               aboutPage={this.aboutPage}
               teamPage={this.teamPage}
             />
-            <SuccessDeposit/>
+            <SuccessDeposit />
           </div>
           <div className="moving-background"></div>
         </div>
@@ -253,7 +256,7 @@ export class Dapp extends React.Component {
               aboutPage={this.aboutPage}
               teamPage={this.teamPage}
             />
-            <SuccessWithdraw/>
+            <SuccessWithdraw />
           </div>
           <div className="moving-background"></div>
         </div>
@@ -271,7 +274,7 @@ export class Dapp extends React.Component {
               aboutPage={this.aboutPage}
               teamPage={this.teamPage}
             />
-            <SuccessRunLottery/>
+            <SuccessRunLottery />
           </div>
           <div className="moving-background"></div>
         </div>
@@ -289,7 +292,7 @@ export class Dapp extends React.Component {
               aboutPage={this.aboutPage}
               teamPage={this.teamPage}
             />
-            <Error/>
+            <Error />
           </div>
           <div className="moving-background"></div>
         </div>
@@ -436,28 +439,33 @@ export class Dapp extends React.Component {
     amt = amt.mul(DAI_FACTOR);
 
     // First, approve the DAI transfer to the lottery contract
-    await this._doTransaction(this._dai_contract.approve, [
-      contractAddress.Lottery,
-      amt,
-    ], false, "");
+    await this._doTransaction(
+      this._dai_contract.approve,
+      [contractAddress.Lottery, amt],
+      false,
+      ""
+    );
 
     // Then do the actual deposit
-    await this._doTransaction(this._lottery_contract.deposit, [
-      this.state.aaveAddr,
-      this.state.daiAddr,
-      amt,
-    ], true, "deposit")
-  }
+    await this._doTransaction(
+      this._lottery_contract.deposit,
+      [this.state.aaveAddr, this.state.daiAddr, amt],
+      true,
+      "deposit"
+    );
+  };
 
   /**
    * Withdraw all your DAI from the contract.
    */
   async withdraw() {
     // Call the contract withdraw function.
-    await this._doTransaction(this._lottery_contract.withdraw, [
-      this.state.aaveAddr,
-      this.state.daiAddr,
-    ], true, "withdraw");
+    await this._doTransaction(
+      this._lottery_contract.withdraw,
+      [this.state.aaveAddr, this.state.daiAddr],
+      true,
+      "withdraw"
+    );
   }
 
   /**
@@ -530,7 +538,7 @@ export class Dapp extends React.Component {
     // Create a new JavaScript Date object based on the timestamp
     // multiplied by 1000 so that the argument is in milliseconds, not seconds.
     var date = new Date(res * 1000);
-    date.setDate(date.getDate() + 1)
+    date.setDate(date.getDate() + 1);
     return await date;
   }
 
@@ -538,10 +546,12 @@ export class Dapp extends React.Component {
    * Run the lottery.
    */
   async runLottery() {
-    await this._doTransaction(this._lottery_contract.runLottery, [
-      this.state.aaveAddr,
-      this.state.daiAddr,
-    ], true, "runLottery");
+    await this._doTransaction(
+      this._lottery_contract.runLottery,
+      [this.state.aaveAddr, this.state.daiAddr],
+      true,
+      "runLottery"
+    );
   }
 
   /**
@@ -574,14 +584,14 @@ export class Dapp extends React.Component {
       }
 
       // If we got here, the transaction was successful, so you may want to
-      // update your state. 
-      if(isFinalTransaction && transactionType==="deposit") {
+      // update your state.
+      if (isFinalTransaction && transactionType === "deposit") {
         this.setState({ page: "successDeposit" });
       }
-      if(isFinalTransaction && transactionType==="withdraw") {
+      if (isFinalTransaction && transactionType === "withdraw") {
         this.setState({ page: "successWithdraw" });
       }
-      if(isFinalTransaction && transactionType==="runLottery") {
+      if (isFinalTransaction && transactionType === "runLottery") {
         this.setState({ page: "successRunLottery" });
       }
     } catch (error) {
