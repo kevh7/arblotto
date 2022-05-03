@@ -70,7 +70,7 @@ contract Lottery {
     uint256 private _lastLottery = 0;
 
     // Minimum number of seconds between lotteries
-    uint256 constant lotteryInterval = 86400;
+    uint256 public constant lotteryInterval = 86400;
 
     /**
      * @dev Deposit DAI into the contract, thus entering the lottery.
@@ -179,6 +179,10 @@ contract Lottery {
         view
         returns (uint256)
     {
+        // Edge case: no one has ever deposited
+        if (_addrs.length == 0) {
+            return 0;
+        }
         // Get the total balance currently in Aave (includes interest accrued)
         (uint256 totalCollateralBase, , , , , ) = AaveInterface(aaveAddr)
             .getUserAccountData(address(this));
@@ -280,31 +284,6 @@ contract Lottery {
      */
     function getActivePool() public view returns (uint256) {
         return _poolActive;
-    }
-
-    /**
-     * @dev Returns the estimated next prize size.
-     * @param aaveAddr Address of Aave contract.
-     */
-    function getEstimatedNextPrize(address aaveAddr)
-        public
-        view
-        returns (uint256)
-    {
-        if (_pool == 0 || _lastLottery == 0) {
-            return 0;
-        }
-
-        // Avoid divison by 0
-        uint256 timeSinceLast = block.timestamp - _lastLottery;
-        if (timeSinceLast == 0) {
-            timeSinceLast = 1;
-        }
-
-        return
-            (getAccruedInterest(aaveAddr) * lotteryInterval * 99) /
-            timeSinceLast /
-            100;
     }
 
     /**

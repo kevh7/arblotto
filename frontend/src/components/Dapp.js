@@ -424,15 +424,24 @@ export class Dapp extends React.Component {
    * Returns the estimated next prize size.
    */
   async getEstimatedNextPrize() {
-    let res = await this._lottery_contract.getEstimatedNextPrize(
+    if ((await this._lottery_contract.getLastLotteryTimestamp()) == 0) {
+      return "0";
+    }
+    let res = await this._lottery_contract.getAccruedInterest(
       this.state.aaveAddr
     );
-    if (isNaN(res)) {
-      res = 0;
-    }
-    return await res.div(DAI_FACTOR).toString();
-  }
 
+    return await res
+      .mul(await this._lottery_contract.lotteryInterval())
+      .mul(BigNumber.from(99))
+      .div(
+        BigNumber.from(Math.floor(Date.now() / 1000)) -
+          (await this._lottery_contract.getLastLotteryTimestamp())
+      )
+      .div(BigNumber.from(100))
+      .div(DAI_FACTOR)
+      .toString();
+  }
   /**
    * Returns the unix timestamp of the last lottery.
    */
