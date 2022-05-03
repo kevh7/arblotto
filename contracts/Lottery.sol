@@ -140,6 +140,12 @@ contract Lottery {
         // Enforce minimum interval between lotteries
         require(block.timestamp - _lastLottery >= lotteryInterval);
 
+        // Edge case: first lottery
+        if (_lastLottery == 0) {
+            _lastLottery = block.timestamp;
+            return;
+        }
+
         // Determine winner
         address winner = _determineWinner();
 
@@ -285,9 +291,20 @@ contract Lottery {
         view
         returns (uint256)
     {
+        if (_pool == 0 || _lastLottery == 0) {
+            return 0;
+        }
+
+        // Avoid divison by 0
+        uint256 timeSinceLast = block.timestamp - _lastLottery;
+        if (timeSinceLast == 0) {
+            timeSinceLast = 1;
+        }
+
         return
-            (((getAccruedInterest(aaveAddr) * lotteryInterval) /
-                (block.timestamp - _lastLottery)) * 99) / 100;
+            (getAccruedInterest(aaveAddr) * lotteryInterval * 99) /
+            timeSinceLast /
+            100;
     }
 
     /**
