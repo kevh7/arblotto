@@ -10,12 +10,13 @@ const PrizePage = ( { account, runLottery, withdraw, getDeposited, getTotalPrize
                 <div>
                     <Text fontSize="20px" marginBottom="2vh" textShadow="0 2px #000000">Today's Prize Pool (estimated)</Text>
                     <Text fontSize="30px" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">{getEstimatedNextPrize} DAI</Text>
+                    <Text fontSize="20px" marginTop="2vh" textShadow="0 2px #000000">Next Winner Announced At: {getLastLotteryTimestamp}</Text>
                     <Button backgroundColor="green" borderRadius="5px" boxShadow="0px 2px 2px 1px #0F0F0F" color="white" cursor="pointer" fontFamily="inherit" padding="15px" margin="30px 15px" onClick={runLottery}>Run Lottery</Button>
-                    <Text fontSize="20px" fontFamily="VT323" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">Each day, the first person to click "Run Lottery" runs the lottery for everyone and receives a small reward as compensation</Text>
+                    <Text fontSize="20px" fontFamily="VT323" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">Each day, the first person to click "Run Lottery" initiates the lottery for everyone and receives a small reward as compensation</Text>
                 </div>
                 {isConnected ? (
                     <div>
-                        <HStack spacing="10vh" justify="center" marginTop="8vh">
+                        <HStack spacing="10vh" justify="center" marginTop="3vh">
                         <Box width="30vh" justify="center" align="center">
                             <Flex align="center" justify="center" marginTop="50px">
                                 <Text fontSize="20px" marginBottom="2vh" marginLeft="10vh" marginRight="10vh" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">Your Tickets' Value</Text>
