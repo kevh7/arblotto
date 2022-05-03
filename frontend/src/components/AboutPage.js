@@ -17,7 +17,7 @@ const AboutPage = ( { account }) => {
                     <Text fontSize="48px" textShadow="0 5px #000000" marginTop="10vh">How It Works</Text>
                     <Flex marginTop="5vh" justify="center" align="center">
                         <Text fontSize="30px" letterSpacing="-5.5%" textShadow="0 4px 4px #000000">1.</Text>
-                        <Text fontSize="30px" letterSpacing="-5.5%" fontFamily="VT323" textShadow="0 4px 4px #000000">Players buy tickets using USDC</Text>
+                        <Text fontSize="30px" letterSpacing="-5.5%" fontFamily="VT323" textShadow="0 4px 4px #000000">Players buy tickets using DAI</Text>
                     </Flex>
                     <Flex justify="center" align="center">    
                         <Text fontSize="30px" letterSpacing="-5.5%" textShadow="0 4px 4px #000000">2.</Text>
