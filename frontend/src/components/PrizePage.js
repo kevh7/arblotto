@@ -1,18 +1,25 @@
 import { Box, Button, Flex, Text, HStack } from '@chakra-ui/react';
 import "./Dapp.css"
 
-const PrizePage = ( { account, runLottery, withdraw, getDeposited, getTotalPrizesWon, getEstimatedNextPrize, getLastLotteryTimestamp }) => {
+const PrizePage = ( { account, runLottery, withdraw, getDeposited, getTotalPrizesWon, getEstimatedNextPrize, getLastLotteryTimestamp, isNewLotteryTime }) => {
     const isConnected = Boolean(account);
 
     return(
         <Flex justify="center" align="center" height="100vh" paddingBottom="150px">
-            <Box width="520px">
+            <Box width="80vw">
                 <div>
                     <Text fontSize="20px" marginBottom="2vh" textShadow="0 2px #000000">Today's Prize Pool (estimated)</Text>
                     <Text fontSize="30px" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">{getEstimatedNextPrize} DAI</Text>
-                    <Text fontSize="20px" marginTop="2vh" textShadow="0 2px #000000">Next Winner Announced At: {getLastLotteryTimestamp}</Text>
-                    <Button backgroundColor="green" borderRadius="5px" boxShadow="0px 2px 2px 1px #0F0F0F" color="white" cursor="pointer" fontFamily="inherit" padding="15px" margin="30px 15px" onClick={runLottery}>Run Lottery</Button>
-                    <Text fontSize="20px" fontFamily="VT323" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">Each day, the first person to click "Run Lottery" initiates the lottery for everyone and receives a small reward as compensation</Text>
+                    <Text fontSize="25px" marginTop="2vh" fontFamily="VT323" textShadow="0 3px 3px #000000">Next Winner Picked At: </Text>
+                    <Text fontSize="30px" fontFamily="VT323" textShadow="0 3px 3px #000000">{getLastLotteryTimestamp}</Text>
+                    {isNewLotteryTime ? (
+                        <Button backgroundColor="green" borderRadius="5px" boxShadow="0px 2px 2px 1px #0F0F0F" color="white" cursor="pointer" fontFamily="inherit" padding="15px" margin="30px 15px" onClick={runLottery}>Run Lottery</Button>
+                    ) :
+                    (
+                        <Button backgroundColor="grey" borderRadius="5px" boxShadow="0px 2px 2px 1px #0F0F0F" color="white" cursor="pointer" fontFamily="inherit" padding="15px" margin="30px 15px" onClick={() => alert("You must wait until the active lottery is complete before a new lottery can be initiated!")}>Run Lottery</Button>
+                    )
+                    }
+                    <Text fontSize="20px" fontFamily="VT323" letterSpacing="-5.5%" textShadow="0 2px 2px #000000">Each day, the first person to click "Run Lottery" initiates the next lottery for everyone and receives a small reward as compensation</Text>
                 </div>
                 {isConnected ? (
                     <div>

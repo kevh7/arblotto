@@ -24,6 +24,7 @@ import TeamPage from "./TeamPage";
 import SuccessDeposit from "./SuccessDeposit";
 import SuccessWithdraw from "./SuccessWithdraw"
 import SuccessRunLottery from "./SuccessRunLottery";
+import Error from "./Error";
 
 const ARBITRUM_MAINNET_NETWORK_ID = "42161";
 const ARBITRUM_TESTNET_NETWORK_ID = "421611";
@@ -57,7 +58,7 @@ export class Dapp extends React.Component {
       totalPrizesWon: 1,
       estimatedNextPrize: 1,
       lastLotteryTimeStamp: 1,
-      successMessage: undefined,
+      isNewLotteryTime: true,
     };
     this.state = this.initialState;
   }
@@ -72,12 +73,18 @@ export class Dapp extends React.Component {
     let totalPrizesWon = await this.getUserTotalPrizesWon();
     let estimatedNextPrize = await this.getEstimatedNextPrize();
     let lastLotteryTimeStamp = await this.getLastLotteryTimestamp();
+    let today = new Date();
+    let isNewLotteryTime = false;
+    if (today.getTime() - lastLotteryTimeStamp.getTime() > 0) {
+      isNewLotteryTime = true;
+    }
     this.setState({
       page: "prizes",
       deposited: deposited,
       totalPrizesWon: totalPrizesWon,
       estimatedNextPrize: estimatedNextPrize,
-      lastLotteryTimeStamp: lastLotteryTimeStamp,
+      lastLotteryTimeStamp: lastLotteryTimeStamp.toString(),
+      isNewLotteryTime: isNewLotteryTime
     });
   };
   aboutPage = () => {
@@ -154,6 +161,7 @@ export class Dapp extends React.Component {
               getTotalPrizesWon={this.state.totalPrizesWon}
               getEstimatedNextPrize={this.state.estimatedNextPrize}
               getLastLotteryTimestamp={this.state.lastLotteryTimeStamp}
+              isNewLotteryTime={this.state.isNewLotteryTime}
             />
           </div>
           <div className="moving-background"></div>
@@ -264,6 +272,24 @@ export class Dapp extends React.Component {
               teamPage={this.teamPage}
             />
             <SuccessRunLottery/>
+          </div>
+          <div className="moving-background"></div>
+        </div>
+      );
+    }
+    if (this.state.page === "error") {
+      return (
+        <div className="overlay">
+          <div className="Dapp">
+            <NavBar
+              account={this.state.selectedAddress}
+              connectWallet={() => this._connectWallet()}
+              homePage={this.homePage}
+              prizesPage={this.prizesPage}
+              aboutPage={this.aboutPage}
+              teamPage={this.teamPage}
+            />
+            <Error/>
           </div>
           <div className="moving-background"></div>
         </div>
@@ -413,17 +439,14 @@ export class Dapp extends React.Component {
     await this._doTransaction(this._dai_contract.approve, [
       contractAddress.Lottery,
       amt,
-    ]);
+    ], false, "");
 
     // Then do the actual deposit
     await this._doTransaction(this._lottery_contract.deposit, [
       this.state.aaveAddr,
       this.state.daiAddr,
       amt,
-    ])
-    this.setState({
-      page: "successDeposit",
-    });
+    ], true, "deposit")
   }
 
   /**
@@ -434,10 +457,7 @@ export class Dapp extends React.Component {
     await this._doTransaction(this._lottery_contract.withdraw, [
       this.state.aaveAddr,
       this.state.daiAddr,
-    ]);
-    this.setState({
-      page: "successWithdraw",
-    });
+    ], true, "withdraw");
   }
 
   /**
@@ -507,7 +527,11 @@ export class Dapp extends React.Component {
    */
   async getLastLotteryTimestamp() {
     let res = await this._lottery_contract.getLastLotteryTimestamp();
-    return await res.toString();
+    // Create a new JavaScript Date object based on the timestamp
+    // multiplied by 1000 so that the argument is in milliseconds, not seconds.
+    var date = new Date(res * 1000);
+    date.setDate(date.getDate() + 1)
+    return await date;
   }
 
   /**
@@ -517,10 +541,7 @@ export class Dapp extends React.Component {
     await this._doTransaction(this._lottery_contract.runLottery, [
       this.state.aaveAddr,
       this.state.daiAddr,
-    ]);
-    this.setState({
-      page: "successRunLottery",
-    });
+    ], true, "runLottery");
   }
 
   /**
@@ -529,7 +550,7 @@ export class Dapp extends React.Component {
    * @param callback the transaction function to be called
    * @param args the list of arguments to be passed into callback
    */
-  async _doTransaction(callback, args) {
+  async _doTransaction(callback, args, isFinalTransaction, transactionType) {
     try {
       // If a transaction fails, we save that error in the component's state.
       // We only save one such error, so before sending a second transaction, we
@@ -553,8 +574,16 @@ export class Dapp extends React.Component {
       }
 
       // If we got here, the transaction was successful, so you may want to
-      // update your state. Here, we update the user's balance.
-      // await this._updateBalance();
+      // update your state. 
+      if(isFinalTransaction && transactionType==="deposit") {
+        this.setState({ page: "successDeposit" });
+      }
+      if(isFinalTransaction && transactionType==="withdraw") {
+        this.setState({ page: "successWithdraw" });
+      }
+      if(isFinalTransaction && transactionType==="runLottery") {
+        this.setState({ page: "successRunLottery" });
+      }
     } catch (error) {
       // We check the error code to see if this error was produced because the
       // user rejected a tx. If that's the case, we do nothing.
@@ -565,7 +594,7 @@ export class Dapp extends React.Component {
       // Other errors are logged and stored in the Dapp's state. This is used to
       // show them to the user, and for debugging.
       console.error(error);
-      this.setState({ transactionError: error });
+      this.setState({ transactionError: error, page: "error" });
     } finally {
       // If we leave the try/catch, we aren't sending a tx anymore, so we clear
       // this part of the state.
